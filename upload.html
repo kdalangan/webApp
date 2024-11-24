@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload PCB Design Image</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+        }
+        input[type="file"] {
+            display: none;
+        }
+        label {
+            display: block;
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px;
+            text-align: center;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Upload PCB Design Image</h1>
+    <form action="/upload" method="POST" enctype="multipart/form-data">
+        <input type="file" name="pcb_image" id="pcb_image" required>
+        <label for="pcb_image">Choose PCB Image</label>
+        <button type="submit">Upload and Analyze</button>
+    </form>
+</div>
+
+</body>
+</html>
