@@ -1,75 +1,116 @@
-import os
-from flask import Flask, render_template, request, redirect, url_for
-from werkzeug.utils import secure_filename
-import tensorflow as tf
+from flask import Flask, render_template, request, send_from_directory, redirect, url_for
+import cv2
 import numpy as np
-from PIL import Image
-import io
+import os
+from keras.models import load_model
+import matplotlib.pyplot as plt
 
 # Initialize Flask app
 app = Flask(__name__)
 
-# Configure upload folder and allowed file types
-UPLOAD_FOLDER = 'uploads/'
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
-
+# Configure uploads folder
+OUTPUT_PATH = r"C:\Users\kdala\Download\webApp\output"
+UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# Function to check allowed file extensions
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+# Define defect classes
+CLASSES = [
+    "open", "short", "mousebite",
+    "spur", "copper", "pin-hole"
+]
 
-# Load your pre-trained deep learning model here (for demo purposes, assuming you have a model)
-model = tf.keras.models.load_model('inceptionv3.model.h5')
+# Load the deep learning model
+try:
+    inception_model = load_model(os.path.join(OUTPUT_PATH, "inceptionv3.keras"))
+    print("Model loaded successfully.")
+except Exception as e:
+    print(f"Error loading model: {e}")
 
-# Define function to process the image
-def process_image(image_path):
-    img = Image.open(image_path)
-    img = img.resize((224, 224))  # Assuming the model expects 224x224 images
-    img = np.array(img) / 255.0  # Normalize the image
-    img = np.expand_dims(img, axis=0)  # Add batch dimension
-    return img
+# Function to get defects from comparison of two images
+def get_defects_list(test_name, temp_name):
+    # (same as your previous implementation)
 
-# Route to upload page
-@app.route('/')
+# Function to draw ROI and labels on image
+def get_image_with_ROI(image_name, defects):
+    # (same as your previous implementation)
+
+# Route for uploading files
+@app.route('/', methods=['GET', 'POST'])
 def upload_file():
+    if request.method == 'POST':
+        # Get the uploaded files
+        test_file = request.files['test_image']
+        temp_file = request.files['temp_image']
+
+        # Save the files
+        test_image_path = os.path.join(app.config['UPLOAD_FOLDER'], test_file.filename)
+        temp_image_path = os.path.join(app.config['UPLOAD_FOLDER'], temp_file.filename)
+
+        test_file.save(test_image_path)
+        temp_file.save(temp_image_path)
+
+        # Get defect predictions
+        defects = get_defects_list(test_image_path, temp_image_path)
+
+        # Display the image with detected defects
+        result_image = get_image_with_ROI(test_image_path, defects)
+
+        # Convert BGR to RGB for displaying with matplotlib
+        img_rgb = cv2.cvtColor(result_image, cv2.COLOR_BGR2RGB)
+
+        # Use matplotlib to save the image
+        plt.imsave(os.path.join(app.config['UPLOAD_FOLDER'], 'result.png'), img_rgb)
+
+        return render_template('result.html', image='result.png')
+
     return render_template('upload.html')
 
-# Route to handle file upload
-@app.route('/upload', methods=['POST'])
-def handle_upload():
-    if 'pcb_image' not in request.files:
-        return redirect(request.url)
-    
-    file = request.files['pcb_image']
-    if file and allowed_file(file.filename):
-        filename = secure_filename(file.filename)
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(filepath)
+# Route for capturing real-time images
+@app.route('/capture', methods=['POST'])
+def capture_image():
+    # Initialize the camera
+    cap = cv2.VideoCapture(0)  # Change to the appropriate camera index if needed
 
-        # Process the image using the deep learning model
-        img = process_image(filepath)
-        predictions = model.predict(img)
+    # Capture a single frame
+    ret, frame = cap.read()
+    cap.release()
 
-        # Mock
-        detected_errors = ['Missing Holes', 'Open Circuit', 'Short Circuit']
+    if not ret:
+        print("Failed to capture image")
+        return redirect(url_for('upload_file'))
 
-        # Render result
-        return render_template('result.html', filename=filename, errors=detected_errors)
-    return redirect(url_for('upload_file'))
+    # Save the captured frame as test image
+    test_image_path = os.path.join(app.config['UPLOAD_FOLDER'], 'captured_test_image.jpg')
+    cv2.imwrite(test_image_path, frame)
 
-# Route to display results 
-@app.route('/result/<filename>')
-def result_page(filename):
-    # Placeholder for results (this should come from the model's predictions)
-    errors = ['Missing Holes', 'Open Circuit', 'Short Circuit']
-    return render_template('result.html', filename=filename, errors=errors)
+    # Process the captured image against a template
+    temp_image_path = os.path.join(app.config['UPLOAD_FOLDER'], 'template_image.jpg')  # Specify template image path
 
-# Route for the simulation page
-@app.route('/simulation/<filename>', methods=['GET'])
-def simulation_page(filename):
-    return render_template('simulation.html', filename=filename)
+    # Ensure template image is available
+    if not os.path.exists(temp_image_path):
+        print("Template image not found.")
+        return redirect(url_for('upload_file'))
 
-# Running the Flask app
-if __name__ == '__main__':
+    # Get defect predictions
+    defects = get_defects_list(test_image_path, temp_image_path)
+
+    # Display the image with detected defects
+    result_image = get_image_with_ROI(test_image_path, defects)
+
+    # Convert BGR to RGB for displaying with matplotlib
+    img_rgb = cv2.cvtColor(result_image, cv2.COLOR_BGR2RGB)
+
+    # Use matplotlib to save the image
+    plt.imsave(os.path.join(app.config['UPLOAD_FOLDER'], 'result.png'), img_rgb)
+
+    return render_template('result.html', image='result.png')
+
+# Route to serve uploaded files
+@app.route('/uploads/<filename>')
+def uploaded_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
+# Run the app
+if __name__ == "__main__":
     app.run(debug=True)

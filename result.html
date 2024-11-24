@@ -3,68 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detection Results</title>
+    <title>Defect Detection Results</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f9f9f9;
-            padding: 20px;
+            font-family: 'Roboto', sans-serif;
+            background-color: #f7f7f7;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
         }
         .container {
-            max-width: 900px;
-            margin: 0 auto;
-            background-color: white;
+            background-color: #fff;
             padding: 40px;
             border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
         }
         h1 {
-            text-align: center;
-        }
-        .image-container {
-            text-align: center;
+            font-size: 24px;
             margin-bottom: 20px;
+            color: #333;
         }
-        .error-list {
-            margin-top: 20px;
-        }
-        .error-item {
-            background-color: #f2dede;
-            padding: 10px;
-            margin: 5px 0;
-            border-radius: 5px;
+        img {
+            width: 100%;
+            max-width: 700px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
         }
         button {
-            width: 100%;
-            padding: 10px;
             background-color: #4CAF50;
             color: white;
-            border: none;
-            border-radius: 5px;
+            padding: 12px 20px;
+            font-size: 16px;
+            border-radius: 4px;
             cursor: pointer;
+            border: none;
+            width: 100%;
+            transition: background-color 0.3s ease;
+            margin-top: 20px;
         }
         button:hover {
             background-color: #45a049;
         }
+        .footer {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #777;
+        }
     </style>
 </head>
 <body>
-
-<div class="container">
-    <h1>PCB Error Detection Results</h1>
-    <div class="image-container">
-        <img src="{{ url_for('static', filename='uploads/' + filename) }}" alt="Uploaded PCB Image" width="80%">
+    <div class="container">
+        <h1>Detected Defects in PCB</h1>
+        <img src="{{ url_for('uploaded_file', filename=image) }}" alt="Detected Image">
+        <button onclick="window.location.href = '/'">Upload Another Image</button>
+        <div class="footer">
+            <p>&copy; 2024 PCB Defect Detection</p>
+        </div>
     </div>
-    <h3>Errors Detected:</h3>
-    <div class="error-list">
-        {% for error in errors %}
-            <div class="error-item">{{ error }}</div>
-        {% endfor %}
-    </div>
-    <a href="{{ url_for('simulation_page', filename=filename) }}">
-        <button>Simulate Electrical Continuity</button>
-    </a>
-</div>
-
 </body>
 </html>
