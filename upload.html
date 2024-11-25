@@ -6,8 +6,18 @@
     <title>PCB Defect Detection</title>
 </head>
 <body>
-    <h1>Upload or Capture PCB Images</h1>
+    <h1>PXRT: Defect Detection </h1>
     
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <ul>
+          {% for message in messages %}
+            <li>{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
     <form method="post" enctype="multipart/form-data" action="/">
         <label for="test_image">Test Image:</label>
         <input type="file" name="test_image" required>
@@ -20,7 +30,7 @@
 
     <hr>
 
-    <h2>Or Capture a Real-Time Image</h2>
+    <h2>Real Time Image Capture</h2>
     <form method="post" action="/capture">
         <button type="submit">Capture Image</button>
     </form>
